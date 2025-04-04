@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lawn N Wash - Service Scheduler</title>
+  <link rel="stylesheet" href="css/booking-styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom styles for service cards and step indicator -->
+  <style>
+    /* Step indicator styles */
+    #step1-circle.step-active {
+      background: #FF8C00;
+      color: white;
+    }
+    
+    #step1-circle.step-active::after {
+      content: '';
+    }
+    
+    /* Service card styles */
+    .service-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      z-index: 1;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    
+    .service-card:hover {
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+    }
+    
+    .service-card.selected {
+      border: 2px solid #FF8C00;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      transform: translateY(-5px);
+    }
+    
+    .service-select-btn {
+      width: 100%;
+      padding: 20px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      background: #FF8C00;
+      color: white;
+      margin-top: 15px;
+      min-height: 64px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .service-card.selected .service-select-btn {
+      background: #FF8C00;
+      color: white;
+      box-shadow: 0 6px 12px rgba(255, 140, 0, 0.5);
+      padding: 22px;
+      font-weight: 700;
+      transform: scale(1.05);
+    }
+    
+    .service-card:not(.selected) .service-select-btn {
+      background: #FFF5E8;
+      color: #FF8C00;
+    }
+    
+    .service-card:not(.selected) .service-select-btn:hover {
+      background: #FF8C00;
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(255, 140, 0, 0.3);
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    /* Confirmation screen */
+    .confirmation-content {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: #4CAF50;
+      color: white;
+      font-size: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    
+    .confirmation-details {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: left;
+    }
+    
+    .detail-item {
+      display: flex;
+      margin: 10px 0;
+    }
+    
+    .detail-label {
+      width: 120px;
+      font-weight: bold;
+    }
+    
+    .confirmation-actions {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    
+    /* Button styles */
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      min-width: 150px;
+      min-height: 48px;
+    }
+    
+    .btn-primary {
+      background-color: #FF8C00;
+      color: white;
+      border: none;
+    }
+    
+    .btn-secondary {
+      background-color: white;
+      color: #FF8C00;
+      border: 2px solid #FF8C00;
+    }
+
+    /* Home button style */
+    .home-button {
+      position: relative;
+      margin: 0 auto 25px;
+      background-color: transparent;
+      color: #FF8C00;
+      border: 2px solid #FF8C00;
+      border-radius: 8px;
+      width: 120px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      text-decoration: none;
+      box-shadow: none;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+
+    .home-button:hover {
+      background-color: #FF8C00;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(255, 140, 0, 0.2);
+    }
+    
+    .home-button .icon {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Home Button -->
+    <a href="../index.html" class="home-button" title="Back to Home"><span class="icon">←</span>Home</a>
+    
+    <h1>Lawn N Wash</h1>
+    <p class="subtitle">Professional Home Maintenance Services</p>
+    
+    <!-- Progress Steps -->
+    <div class="steps">
+      <div class="step">
+        <div class="step-circle step-active" id="step1-circle">1</div>
+        <div class="step-label">Select Services</div>
+      </div>
+      <div class="step">
+        <div class="step-circle step-inactive" id="step2-circle">2</div>
+        <div class="step-label">Schedule</div>
+      </div>
+      <div class="step">
+        <div class="step-circle step-inactive" id="step3-circle">3</div>
+        <div class="step-label">Payment</div>
+      </div>
+    </div>
+    
+    <!-- Screen 1: Service Selection -->
+    <div class="screen active" id="screen1">
+      <div class="services-grid" id="services-container">
+        <!-- Services will be dynamically added here by JavaScript -->
+      </div>
+      
+      <!-- Total Section -->
+      <div class="total-section">
+        <div class="total-content">
+          <div class="total-label">Your Total</div>
+          <div class="total-amount" id="total-amount">$0</div>
+          <div class="selected-services" id="selected-services-text">No services selected</div>
+        </div>
+        <button class="continue-btn" id="continue-to-schedule">Continue to Schedule</button>
+      </div>
+    </div>
+    
+    <!-- Screen 2: Scheduling -->
+    <div class="screen" id="screen2">
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="calendar-title">Schedule Your Service</div>
+        </div>
+        
+        <div id="calendar-view">
+          <div class="month-nav">
+            <button class="nav-btn" id="prev-month">&lt;</button>
+            <div class="month-name" id="month-year">January 2023</div>
+            <button class="nav-btn" id="next-month">&gt;</button>
+          </div>
+          
+          <div class="day-headers">
+            <div class="day-header">Sun</div>
+            <div class="day-header">Mon</div>
+            <div class="day-header">Tue</div>
+            <div class="day-header">Wed</div>
+            <div class="day-header">Thu</div>
+            <div class="day-header">Fri</div>
+            <div class="day-header">Sat</div>
+          </div>
+          
+          <div class="calendar-days" id="calendar-days">
+            <!-- Days will be added dynamically -->
+          </div>
+        </div>
+        
+        <div class="time-selector" id="time-selector" style="display: none;">
+          <div class="time-header">
+            <button class="back-btn" id="back-to-calendar">
+              &lt; Back to Calendar
+            </button>
+            <div class="selected-date" id="selected-date-display">
+              <!-- Selected date will be shown here -->
+            </div>
+          </div>
+          
+          <h3>Available Time Slots</h3>
+          
+          <div class="time-grid" id="time-slots-container">
+            <!-- Time slots will be added dynamically -->
+          </div>
+
+          <div class="payment-options" style="margin-top: 20px; text-align: center;">
+            <button class="btn btn-primary" id="cash-payment-btn" style="background-color: #FF8C00; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 10px;">Pay cash on day</button>
+            <button class="btn btn-secondary" id="card-payment-btn" style="background-color: white; color: #FF8C00; border: 2px solid #FF8C00; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600;">Pay with card</button>
+          </div>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="back-button" id="back-to-services">Back to Services</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Confirmation Screen (shown after booking) -->
+    <div class="screen" id="confirmation-screen" style="display: none;">
+      <div class="confirmation-content">
+        <div class="success-icon">✓</div>
+        <h2>Your Booking is Confirmed!</h2>
+        
+        <div class="confirmation-details">
+          <div class="detail-item">
+            <div class="detail-label">Services:</div>
+            <div class="detail-value" id="confirmation-services"></div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">Date:</div>
+            <div class="detail-value" id="confirmation-date"></div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">Time:</div>
+            <div class="detail-value" id="confirmation-time"></div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">Payment:</div>
+            <div class="detail-value" id="confirmation-payment"></div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">Total:</div>
+            <div class="detail-value" id="confirmation-total"></div>
+          </div>
+        </div>
+        
+        <div class="confirmation-actions">
+          <a href="../index.html" class="btn btn-primary">Return to Home</a>
+          <a href="booking.html" class="btn btn-secondary">Book Another Service</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Screen 3: Payment Modal -->
+    <div class="modal" id="payment-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Complete Your Order</h2>
+          <button class="close-button" id="close-modal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="booking-summary" id="booking-summary">
+            <!-- Booking details will be added here -->
+          </div>
+          
+          <form class="payment-form" id="payment-form">
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input type="text" id="card-name" class="form-input" placeholder="John Smith" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" id="card-email" class="form-input" placeholder="john@example.com" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" id="card-phone" class="form-input" placeholder="(555) 123-4567" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Card Number</label>
+              <input type="text" id="card-number" class="form-input" placeholder="1234 5678 9012 3456" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label">Expiry Date</label>
+                <input type="text" id="card-expiry" class="form-input" placeholder="MM/YY" required>
+              </div>
+              <div class="form-col">
+                <label class="form-label">CVC</label>
+                <input type="text" id="card-cvc" class="form-input" placeholder="123" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Billing Address</label>
+              <input type="text" id="card-address" class="form-input" placeholder="123 Main St" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="background-color: #FF8C00; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 20px; width: 100%;">Complete Payment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Payment Confirmation Modal -->
+    <div class="modal" id="cash-confirmation-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Order Confirmation</h2>
+          <button class="close-button" onclick="closeCashConfirmation()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="success-icon" style="color: #4CAF50; font-size: 48px; text-align: center; margin-bottom: 20px;">✓</div>
+          <h3 style="text-align: center; color: #333;">Your Order Has Been Confirmed!</h3>
+          
+          <div class="order-details" style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <h4>Order Details</h4>
+            <div id="order-summary">
+              <!-- Order details will be populated dynamically -->
+            </div>
+          </div>
+
+          <div class="customer-info" style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <h4>Customer Information</h4>
+            <div id="customer-details">
+              <!-- Customer details will be populated dynamically -->
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <p style="color: #666;">A confirmation email has been sent to your registered email address.</p>
+            <button id="submit-cash-booking" class="btn btn-primary" style="background-color: #FF8C00; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 20px;">Confirm Booking</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/booking-script.js"></script>
+  
+  <!-- Additional script for HTML-only version -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cash payment button
+      const cashPaymentBtn = document.getElementById('cash-payment-btn');
+      const cashConfirmationModal = document.getElementById('cash-confirmation-modal');
+      const submitCashBtn = document.getElementById('submit-cash-booking');
+      
+      if (cashPaymentBtn && cashConfirmationModal) {
+        cashPaymentBtn.addEventListener('click', function() {
+          // Show cash confirmation modal
+          cashConfirmationModal.style.display = 'flex';
+          
+          // Populate order summary
+          populateOrderSummary();
+        });
+      }
+      
+      if (submitCashBtn) {
+        submitCashBtn.addEventListener('click', function() {
+          // Hide modal
+          cashConfirmationModal.style.display = 'none';
+          
+          // Show confirmation screen
+          document.querySelectorAll('.screen').forEach(screen => {
+            screen.style.display = 'none';
+          });
+          
+          const confirmationScreen = document.getElementById('confirmation-screen');
+          if (confirmationScreen) {
+            confirmationScreen.style.display = 'block';
+            
+            // Populate confirmation details
+            const selectedServicesText = document.getElementById('selected-services-text');
+            const totalAmount = document.getElementById('total-amount');
+            const selectedDateDisplay = document.getElementById('selected-date-display');
+            const selectedTimeSlot = document.querySelector('.time-slot.selected');
+            
+            if (document.getElementById('confirmation-services') && selectedServicesText) {
+              document.getElementById('confirmation-services').textContent = selectedServicesText.textContent;
+            }
+            
+            if (document.getElementById('confirmation-date') && selectedDateDisplay) {
+              document.getElementById('confirmation-date').textContent = selectedDateDisplay.textContent;
+            }
+            
+            if (document.getElementById('confirmation-time') && selectedTimeSlot) {
+              document.getElementById('confirmation-time').textContent = selectedTimeSlot.textContent;
+            }
+            
+            if (document.getElementById('confirmation-payment')) {
+              document.getElementById('confirmation-payment').textContent = 'Cash on day';
+            }
+            
+            if (document.getElementById('confirmation-total') && totalAmount) {
+              document.getElementById('confirmation-total').textContent = totalAmount.textContent;
+            }
+          }
+        });
+      }
+      
+      // Card payment handling
+      const cardPaymentBtn = document.getElementById('card-payment-btn');
+      const paymentModal = document.getElementById('payment-modal');
+      const paymentForm = document.getElementById('payment-form');
+      
+      if (cardPaymentBtn && paymentModal) {
+        cardPaymentBtn.addEventListener('click', function() {
+          // Show payment modal
+          paymentModal.style.display = 'flex';
+          
+          // Update booking summary
+          updateBookingSummary();
+        });
+      }
+      
+      if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          // Hide modal
+          paymentModal.style.display = 'none';
+          
+          // Show confirmation screen
+          document.querySelectorAll('.screen').forEach(screen => {
+            screen.style.display = 'none';
+          });
+          
+          const confirmationScreen = document.getElementById('confirmation-screen');
+          if (confirmationScreen) {
+            confirmationScreen.style.display = 'block';
+            
+            // Populate confirmation details
+            const selectedServicesText = document.getElementById('selected-services-text');
+            const totalAmount = document.getElementById('total-amount');
+            const selectedDateDisplay = document.getElementById('selected-date-display');
+            const selectedTimeSlot = document.querySelector('.time-slot.selected');
+            
+            if (document.getElementById('confirmation-services') && selectedServicesText) {
+              document.getElementById('confirmation-services').textContent = selectedServicesText.textContent;
+            }
+            
+            if (document.getElementById('confirmation-date') && selectedDateDisplay) {
+              document.getElementById('confirmation-date').textContent = selectedDateDisplay.textContent;
+            }
+            
+            if (document.getElementById('confirmation-time') && selectedTimeSlot) {
+              document.getElementById('confirmation-time').textContent = selectedTimeSlot.textContent;
+            }
+            
+            if (document.getElementById('confirmation-payment')) {
+              document.getElementById('confirmation-payment').textContent = 'Credit Card';
+            }
+            
+            if (document.getElementById('confirmation-total') && totalAmount) {
+              document.getElementById('confirmation-total').textContent = totalAmount.textContent;
+            }
+          }
+        });
+      }
+      
+      // Close modal button
+      const closeModalBtn = document.getElementById('close-modal');
+      if (closeModalBtn && paymentModal) {
+        closeModalBtn.addEventListener('click', function() {
+          paymentModal.style.display = 'none';
+        });
+      }
+      
+      function populateOrderSummary() {
+        const orderSummary = document.getElementById('order-summary');
+        const selectedDateDisplay = document.getElementById('selected-date-display');
+        const selectedTimeSlot = document.querySelector('.time-slot.selected');
+        
+        if (orderSummary) {
+          let orderHTML = '';
+          const selectedServicesText = document.getElementById('selected-services-text');
+          const totalAmount = document.getElementById('total-amount');
+          
+          orderHTML += `<p><strong>Services:</strong> ${selectedServicesText.textContent}</p>`;
+          orderHTML += `<p><strong>Date/Time:</strong> ${selectedDateDisplay ? selectedDateDisplay.textContent : 'Not specified'} ${selectedTimeSlot ? 'at ' + selectedTimeSlot.textContent : ''}</p>`;
+          orderHTML += `<p><strong>Total:</strong> ${totalAmount.textContent}</p>`;
+          
+          orderSummary.innerHTML = orderHTML;
+        }
+        
+        // Populate customer details (in a real app, this would come from the user's account)
+        const customerDetails = document.getElementById('customer-details');
+        if (customerDetails) {
+          customerDetails.innerHTML = `
+            <p><strong>Name:</strong> John Smith</p>
+            <p><strong>Email:</strong> john.smith@example.com</p>
+            <p><strong>Phone:</strong> (555) 123-4567</p>
+            <p><strong>Address:</strong> 123 Main St, Anytown, USA</p>
+          `;
+        }
+      }
+      
+      function updateBookingSummary() {
+        const bookingSummary = document.getElementById('booking-summary');
+        if (!bookingSummary) return;
+        
+        let summaryHTML = '<h3>Booking Summary</h3>';
+        
+        // Selected services
+        summaryHTML += '<div class="summary-section"><h4>Selected Services</h4>';
+        
+        let total = 0;
+        window.selectedServices.forEach(id => {
+          const service = services.find(s => s.id === id);
+          if (service) {
+            total += service.price;
+            summaryHTML += `<div class="summary-item">
+              <span>${service.name}</span>
+              <span>$${service.price}</span>
+            </div>`;
+          }
+        });
+        
+        summaryHTML += '</div>';
+        
+        // Selected date and time
+        const selectedDateDisplay = document.getElementById('selected-date-display');
+        const selectedTimeSlot = document.querySelector('.time-slot.selected');
+        
+        if (selectedDateDisplay && selectedTimeSlot) {
+          summaryHTML += `<div class="summary-section">
+            <h4>Appointment Time</h4>
+            <div class="summary-item">
+              <span>${selectedDateDisplay.textContent}</span>
+              <span>${selectedTimeSlot.textContent}</span>
+            </div>
+          </div>`;
+        }
+        
+        // Total
+        summaryHTML += `<div class="summary-section summary-total">
+          <h4>Total</h4>
+          <div class="summary-item">
+            <span>Total Amount</span>
+            <span>$${total}</span>
+          </div>
+        </div>`;
+        
+        bookingSummary.innerHTML = summaryHTML;
+      }
+      
+      // Make closeCashConfirmation available globally
+      window.closeCashConfirmation = function() {
+        const cashModal = document.getElementById('cash-confirmation-modal');
+        if (cashModal) {
+          cashModal.style.display = 'none';
+        }
+      };
+    });
+  </script>
+</body>
+</html> 
